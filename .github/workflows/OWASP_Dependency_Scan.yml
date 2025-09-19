@@ -2,8 +2,6 @@ name: OWASP Dependency Scan on PR
 
 on:
   pull_request:
-    paths:
-      - requirements.txt
 
 jobs:
   depscan:
@@ -18,14 +16,14 @@ jobs:
         id: check_diff
         run: |
           git fetch origin ${{ github.base_ref }}
-          if git diff --name-only origin/${{ github.base_ref }} | grep -q "^requirements.txt$"; then
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }} HEAD | grep -c "^requirements.txt$" || true)
+          if [ "$CHANGED" -gt 0 ]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "changed=false" >> $GITHUB_OUTPUT
-
+          fi
       - name: Print status
-        run: |
-          echo "requirements.txt changed: ${{ steps.check_diff.outputs.changed }}"
+        run: echo "requirements.txt changed: ${{ steps.check_diff.outputs.changed }}"
 
       - name: Set up Python
         if: steps.check_diff.outputs.changed == 'true'
