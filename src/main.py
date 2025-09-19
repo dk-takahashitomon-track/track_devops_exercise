@@ -3,5 +3,3 @@ def add(a, b, c=0):
     return int(a + b) + int(c)
   except:
     return "error"
-
-print(0)
