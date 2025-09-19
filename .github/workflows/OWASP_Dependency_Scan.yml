@@ -23,7 +23,7 @@ jobs:
           fi
 
       - name: Print status
-        run: echo "requirements.txt changed: ${{ env.REQUIREMENTS_CHANGED }}"
+        run: echo "requirements.txt changed ${{ env.REQUIREMENTS_CHANGED }}"
 
       - name: Set up Python
         if: env.REQUIREMENTS_CHANGED == 'true'
