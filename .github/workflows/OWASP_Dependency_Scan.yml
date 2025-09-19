@@ -13,43 +13,42 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Check if requirements.txt changed
-        id: check_diff
         run: |
           git fetch origin ${{ github.base_ref }}
           CHANGED=$(git diff --name-only origin/${{ github.base_ref }} HEAD | grep -c "^requirements.txt$" || true)
           if [ "$CHANGED" -gt 0 ]; then
-            echo "changed=true" >> $GITHUB_ENV
+            echo "REQUIREMENTS_CHANGED=true" >> $GITHUB_ENV
           else
-            echo "changed=false" >> $GITHUB_ENV
+            echo "REQUIREMENTS_CHANGED=false" >> $GITHUB_ENV
           fi
 
       - name: Print status
-        run: echo "requirements.txt changed: ${{ env.changed }}"
+        run: echo "requirements.txt changed: ${{ env.REQUIREMENTS_CHANGED }}"
 
       - name: Set up Python
-        if: env.changed == 'true'
+        if: env.REQUIREMENTS_CHANGED == 'true'
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
       - name: Install dependencies
-        if: env.changed == 'true'
+        if: env.REQUIREMENTS_CHANGED == 'true'
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Install OWASP dep-scan
-        if: env.changed == 'true'
+        if: env.REQUIREMENTS_CHANGED == 'true'
         run: pip install owasp-depscan
 
       - name: Run dep-scan
-        if: env.changed == 'true'
+        if: env.REQUIREMENTS_CHANGED == 'true'
         run: |
           mkdir -p reports
           depscan --src . --type python --report_file reports/depscan.json
 
       - name: Check for vulnerabilities
-        if: env.changed == 'true'
+        if: env.REQUIREMENTS_CHANGED == 'true'
         run: |
           if grep -q '"severity": "high"' reports/depscan.json; then
             echo "❌ High severity vulnerabilities found!"
