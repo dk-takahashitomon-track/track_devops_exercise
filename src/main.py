@@ -4,4 +4,4 @@ def add(a, b, c=0):
   except:
     return "error"
 
-print("フォーマッター動作確認")
+print("OWASP動作確認")
