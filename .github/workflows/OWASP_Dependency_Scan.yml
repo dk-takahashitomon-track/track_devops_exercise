@@ -1,45 +1,59 @@
-name: OWASP Dependency Scan
+name: OWASP Dependency Scan on PR
 
 on:
-  push:
-    paths:
-      - requirements.txt
   pull_request:
     paths:
       - requirements.txt
 
 jobs:
   depscan:
-    name: Run OWASP dep-scan
+    name: Conditional OWASP dep-scan
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Check if requirements.txt changed
+        id: check_diff
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          if git diff --name-only origin/${{ github.base_ref }} | grep -q "^requirements.txt$"; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+
+      - name: Print status
+        run: |
+          echo "requirements.txt changed: ${{ steps.check_diff.outputs.changed }}"
+
       - name: Set up Python
+        if: steps.check_diff.outputs.changed == 'true'
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
       - name: Install dependencies
+        if: steps.check_diff.outputs.changed == 'true'
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Install OWASP dep-scan
+        if: steps.check_diff.outputs.changed == 'true'
         run: pip install owasp-depscan
 
       - name: Run dep-scan
+        if: steps.check_diff.outputs.changed == 'true'
         run: |
           mkdir -p reports
           depscan --src . --type python --report_file reports/depscan.json
 
       - name: Check for vulnerabilities
+        if: steps.check_diff.outputs.changed == 'true'
         run: |
           if grep -q '"severity": "high"' reports/depscan.json; then
             echo "❌ High severity vulnerabilities found!"
             exit 1
           else
             echo "✅ No high severity vulnerabilities found."
-          fi
